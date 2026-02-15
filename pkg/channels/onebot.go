@@ -776,6 +776,15 @@ func (c *OneBotChannel) parseMessageSegments(raw json.RawMessage, selfID int64) 
 func (c *OneBotChannel) handleRawEvent(raw *oneBotRawEvent) {
 	switch raw.PostType {
 	case "message":
+		if userID, err := parseJSONInt64(raw.UserID); err == nil && userID > 0 {
+			if !c.IsAllowed(strconv.FormatInt(userID, 10)) {
+				logger.DebugCF("onebot", "Message rejected by allowlist", map[string]interface{}{
+					"user_id": userID,
+				})
+				return
+			}
+		}
+
 		evt, err := c.normalizeMessageEvent(raw)
 		if err != nil {
 			logger.WarnCF("onebot", "Failed to normalize message event", map[string]interface{}{
